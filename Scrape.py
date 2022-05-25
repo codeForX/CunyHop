@@ -1,5 +1,6 @@
 
 
+from random import randint
 from time import sleep
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -22,19 +23,10 @@ college = ''
 
 PATH = '/Users/srulyrosenblat/Developer/selenium test/chromedriver'
 driver = webdriver.Chrome(PATH)
+driver.maximize_window()
 driver.get(url ='https://globalsearch.cuny.edu/CFGlobalSearchTool/CFSearchToolController')
 
 def crawlSite():
-    # select = Select(driver.find_element(By.ID, 't_pd'))
-    # dropdownElems = driver.find_elements(By.CLASS_NAME, 'cunylite_DROPDOWNLIST')
-    # next = driver.find_element(By.NAME, 'next_btn')
-    # select.select_by_index(2)
-    # dropdownElems[1].click()
-    # next.click()
-    # loopThroughClasses()
-    # driver.back()
-
-    # sleep(1)
     for option in range(3):
         select = Select(driver.find_element(By.ID, 't_pd'))
         next = driver.find_element(By.NAME, 'next_btn')
@@ -47,9 +39,10 @@ def crawlSite():
                 dropdownElems[0].click()
             else:
                 dropdownElems[i-1].click()
-                sleep(.1)
+                sleep(getWait())
             dropdownElems[i].click()
-            sleep(.1)      
+            print(dropdownElems[i].text)
+            sleep(getWait())      
             next.click()
             loopThroughClasses()
             driver.back()
@@ -67,7 +60,7 @@ def loopThroughClasses():
             openCheckBox = driver.find_element(By.ID,'open_classId')
             if openCheckBox.is_selected():
                 openCheckBox.click()
-           
+            print("     - "+ select.options[i].text)
             select.select_by_index(i)
             
             # select.select_by_index(0)
@@ -86,7 +79,6 @@ def handleDetailsScreen():
         soup = BeautifulSoup(content, 'html.parser')
         description = soup.find(name='table',attrs={'id': 'ACE_SSR_CLS_DTL_WRK_GROUP6'}).text.replace("\\xa0",'').replace('\n','')
         requirements=  soup.find(name='span',attrs={'id': 'SSR_CLS_DTL_WRK_SSR_REQUISITE_LONG'}).text.replace("\\xa0",'').replace('\n','')
-        print((description,requirements))
         return (description,requirements)
     except TimeoutException:
         print("Loading took too much time!")
@@ -97,7 +89,8 @@ def handleDetailsScreen():
 
 def handleMainScreen():
    pass
-
+def getWait():
+    return randint(1,100) * .001
 
 
 def readClasses():
@@ -109,7 +102,7 @@ def readClasses():
     schoolName = schoolInfo[0].strip()
     termInfo = schoolInfo[1].strip()
     subject = soup.find(name='strong').text.strip()
-    print(subject)
+    # print(subject)
 
     c = 0
     uploadData =[]
@@ -120,7 +113,7 @@ def readClasses():
         if('cunylite_LABEL' in tableStr):
             classHeaders = table.find(name="span", attrs={'class': 'cunylite_LABEL'}).text
             classHeaders = classHeaders.replace("\xa0", '').split('-')
-            print(classHeaders)
+            # print(classHeaders)
             classCode = classHeaders[0]
             topicName = classHeaders[1]
         if 'Days &amp; Times' in  tableStr:
@@ -143,14 +136,14 @@ def readClasses():
                     classData['link'] = 'https://globalsearch.cuny.edu/CFGlobalSearchTool/' + re.sub("&session_searched=\w*","&session_searched=NA" , classInfo.a['href']   )
                     if not description:
                         try: 
-                            sleep(.02)
+                            sleep(getWait())
                             
                             driver.get('https://globalsearch.cuny.edu/CFGlobalSearchTool/' + table.a['href'])
                             details = handleDetailsScreen()
                             description = details[0]
                             requirements = details[1]
                             classCollection.add(classData)
-                            sleep(.1)
+                            sleep(getWait() * 10)
                             driver.back()
                         except Exception as e:
                             driver.back()
@@ -172,23 +165,16 @@ def readClasses():
                                     # print(teacher)
                             classData[category] = teacher
                         else:
+
                             classData[category] = data
                         # print(category +"  :  "+data)
                         
                         allClasses.append(classData)
-                    # try: 
-                    #     driver.get('https://globalsearch.cuny.edu/CFGlobalSearchTool/' + table.a['href'])
-                    #     handleDetailsScreen(classData)
-                    #     sleep(.1)
-                    #     print(classData)
-                    #     classCollection.add(classData)
-                    #     driver.back()
-                    # except Exception as e:
-                    #     driver.back()
-                    #     print(e)
-            uploadData.append({'className': topicName, "classes":allClasses,"classCode":classCode,"schoolName": schoolName,"termInfo": termInfo,"subject": subject,'requirements':requirements,'description':description})
-    print(uploadData[0])
-    print(c)
+                    try: 
+                        classCollection.add({'className': topicName, "classes":allClasses,"classCode":classCode,"schoolName": schoolName,"termInfo": termInfo,"subject": subject,'requirements':requirements,'description':description})
+                    except Exception as e:
+                        print(e)
+    # print(c)
 
     return classes
 # def readClasses():
