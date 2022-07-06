@@ -15,13 +15,13 @@ from selenium.webdriver.common.by import By
 from selenium.common.exceptions import TimeoutException
 
 import re
-cred = credentials.Certificate("/Users/srulyrosenblat/Developer/CunySearch/key.json")
+cred = credentials.Certificate('put firebase credentials here')
 firebase_admin.initialize_app(cred)
 db = firestore.client()
 classCollection =  db.collection('classes')
 college = ''
 
-PATH = '/Users/srulyrosenblat/Developer/selenium test/chromedriver'
+PATH = 'put path to chrome driver here'
 driver = webdriver.Chrome(PATH)
 driver.maximize_window()
 driver.get(url ='https://globalsearch.cuny.edu/CFGlobalSearchTool/CFSearchToolController')
@@ -69,11 +69,8 @@ def loopThroughClasses():
             driver.back()
 
 def handleDetailsScreen():
-    # with open('/Users/srulyrosenblat/Developer/CunySearch/home.html','r') as content:
     delay = 3 # seconds
     try:
-        
-        # myElem = WebDriverWait(driver, delay).until(EC.presence_of_element_located((By.ID, 'ACE_SSR_CLS_DTL_WRK_GROUP6')))
         html_file = driver.page_source
         content = html_file
         soup = BeautifulSoup(content, 'html.parser')
@@ -83,9 +80,6 @@ def handleDetailsScreen():
     except TimeoutException:
         print("Loading took too much time!")
         return ('','')
-    
-    # print(html_file)
-    
 
 def handleMainScreen():
    pass
@@ -94,7 +88,6 @@ def getWait():
 
 
 def readClasses():
-    # with open('/Users/srulyrosenblat/Developer/CunySearch/home.html','r') as content:
     content =  driver.page_source
     soup = BeautifulSoup(content, 'html.parser')
     tables = soup.find_all(name="table", attrs={'border': '0'})
@@ -102,7 +95,6 @@ def readClasses():
     schoolName = schoolInfo[0].strip()
     termInfo = schoolInfo[1].strip()
     subject = soup.find(name='strong').text.strip()
-    # print(subject)
 
     c = 0
     uploadData =[]
@@ -113,14 +105,10 @@ def readClasses():
         if('cunylite_LABEL' in tableStr):
             classHeaders = table.find(name="span", attrs={'class': 'cunylite_LABEL'}).text
             classHeaders = classHeaders.replace("\xa0", '').split('-')
-            # print(classHeaders)
             classCode = classHeaders[0]
             topicName = classHeaders[1]
         if 'Days &amp; Times' in  tableStr:
             c+=1
-            
-            # print(table)
-
             headers = table.find_all(name='td', attrs={'class': 'cunylitegridcollum'})
             classes = table.find_all(name='tr', attrs={})
             classData = {}
@@ -128,8 +116,6 @@ def readClasses():
             l = 0
             for classInfo in classes:
                 l+=1
-                
-                # print("teachers:")
                 allClasses = []
                 atrs= classInfo.find_all(name='td', attrs={'class': 'cunylite_LEVEL3GRIDROW'})
                 if(len(atrs)):        
@@ -167,54 +153,13 @@ def readClasses():
                         else:
 
                             classData[category] = data
-                        # print(category +"  :  "+data)
                         
                         allClasses.append(classData)
                     try: 
                         classCollection.add({'className': topicName, "classes":allClasses,"classCode":classCode,"schoolName": schoolName,"termInfo": termInfo,"subject": subject,'requirements':requirements,'description':description})
                     except Exception as e:
                         print(e)
-    # print(c)
 
     return classes
-# def readClasses():
-#     # with open('/Users/srulyrosenblat/Developer/CunySearch/home.html','r') as html_file:
-#     content =  driver.page_source
-#     # print(content)
-#     soup = BeautifulSoup(content, 'html.parser')
-#     tables = soup.find_all(name="table", attrs={'border': '0'})
-#     c = 0
-#     classes = []
-#     for table in tables:
-#         if 'Days &amp; Times' in  str(table):
-#             c+=1
-#             # print()
-           
-#             headers = table.find_all(name='td', attrs={'class': 'cunylitegridcollum'})
-#             atrs= table.find_all(name='td', attrs={'class': 'cunylite_LEVEL3GRIDROW'})
-#             classData = {}
-#             for i in range(1,len(headers)):
-#                 category = str(headers[i].getText().replace(" ", "").replace('&',"And"))
-#                 data = str(atrs[i].getText()).strip()
-#                 classData[category] = data
-                
-#                 classes.append(classData)
-#             try: 
-#                 driver.get('https://globalsearch.cuny.edu/CFGlobalSearchTool/' + table.a['href'])
-#                 handleDetailsScreen(classData)
-#                 sleep(.1)
-#                 print(classData)
-#                 classCollection.add(classData)
-#                 driver.back()
-#             except Exception as e:
-#                 driver.back()
-#                 print(e)
-#     return classes
 
-
-
-
-# handleSearchScreen()
 crawlSite()
-
-# print(f'{}')
